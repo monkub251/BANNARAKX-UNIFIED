@@ -1,0 +1,70 @@
+name: build-exe
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: build-exe-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    env:
+      QT_QPA_PLATFORM: offscreen
+      PYTHONUTF8: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Locate app folder
+        id: app
+        shell: bash
+        run: |
+          if [ -f run.py ]; then DIR="."
+          elif [ -f BANNARAKX_UNIFIED/run.py ]; then DIR="BANNARAKX_UNIFIED"
+          else
+            echo "::error::run.py not found. Repo contents:"
+            ls -la
+            exit 1
+          fi
+          echo "dir=$DIR" >> "$GITHUB_OUTPUT"
+          echo "App folder: $DIR"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: ${{ steps.app.outputs.dir }}/requirements-dev.txt
+
+      - name: Install dependencies
+        working-directory: ${{ steps.app.outputs.dir }}
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: Run tests
+        working-directory: ${{ steps.app.outputs.dir }}
+        run: python -m pytest -q tests
+
+      - name: Build exe
+        working-directory: ${{ steps.app.outputs.dir }}
+        shell: cmd
+        run: >
+          pyinstaller --noconfirm --clean --onefile --windowed --uac-admin
+          --name BANNARAKX_UNIFIED --icon assets/logo.ico --add-data "assets;assets"
+          --distpath dist/BANNARAKX_UNIFIED --workpath build run.py
+
+      - name: Copy originals next to exe
+        working-directory: ${{ steps.app.outputs.dir }}
+        shell: cmd
+        run: xcopy /E /I /Y originals dist\BANNARAKX_UNIFIED\originals
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BANNARAKX_UNIFIED
+          path: ${{ steps.app.outputs.dir }}/dist/BANNARAKX_UNIFIED
+          if-no-files-found: error
