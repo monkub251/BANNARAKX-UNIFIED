@@ -1,0 +1,35 @@
+รายงานสแกนความปลอดภัย  BANNARAKX  (สแกนเมื่อ 16 ต.ค. 2026)
+=====================================================================
+ขอบเขต: BANNARAKX_ULTIMATE_PACK.zip (สคริปต์/reg/bat/C# ทั้งหมดอ่านโค้ดได้)
+        BANNARAKX-PRO-exe.zip  (BANNARAKX PRO.exe  PyInstaller + PySide6, แกะโค้ดตรวจแบบ static)
+SHA256 ของ exe: e770eacb285355e4e33377ccb7e9286d879ef667752e7a719a4f099b04c2a10a
+
+ผลสรุป: ไม่พบมัลแวร์ / โทรจัน / ตัวขโมยข้อมูล / ตัวดาวน์โหลดโค้ด / โค้ดเข้ารหัสซ่อน
+---------------------------------------------------------------------
+เช็กแล้วไม่เจอ:
+ - ไม่มีคำสั่งดาวน์โหลด (Invoke-WebRequest, DownloadString, bitsadmin, certutil, curl)
+ - ไม่มี base64/-EncodedCommand/Invoke-Expression ซ่อนโค้ด
+ - ไม่มี webhook (Discord/Telegram), ไม่มี URL ภายนอก มีแค่ IP DNS สาธารณะ
+   (1.1.1.1, 8.8.8.8, 9.9.9.9, OpenDNS, AdGuard) ที่ใช้ตั้งค่า DNS เท่านั้น
+ - ไม่มี Run key เพื่อฝังตัวเอง ไม่มี scheduled task ใหม่ ไม่แตะ hosts file
+ - ไม่มีการปิด Defender / Firewall / UAC
+ - ไม่มี keylogger / อ่านคลิปบอร์ด / ขโมย token
+
+สิ่งเสี่ยงที่เจอ (ไม่ใช่มัลแวร์ แต่ลดความปลอดภัยหรือกระทบระบบ)
+---------------------------------------------------------------------
+1. [สูง]  07_OPTIONAL_SECURITY_OFF.reg  ปิด Spectre/Meltdown mitigation + VBS/HVCI
+           >> ลบออกจากชุด CLEAN แล้ว (ทั้งไฟล์ปกติและ UNDO)
+           >> ใน BANNARAKX PRO.exe มีตัวเลือกเดียวกันฝังอยู่ ลบไม่ได้หากไม่มีซอร์สโค้ด
+              ห้ามกดตัวเลือก "Security mitigations off" เด็ดขาด
+2. [กลาง] tools/LEAN_WINDOWS (โหมด PLUS) ปิด Windows Update / Print / RDP / File sharing
+           >> ยังอยู่ในชุด ใช้เฉพาะถ้าเข้าใจ โหมดปกติไม่แตะ Windows Update/Defender/Firewall
+3. [กลาง] 06_PROCESS_REDUCE รวม svchost (SvcHostSplitThresholdInKB) บริการหนึ่งพังอาจลากตัวอื่น
+           >> ยังอยู่ มีไฟล์ UNDO
+4. [ต่ำ]  ทุกตัวรันด้วยสิทธิ์ Administrator และใช้ ExecutionPolicy Bypass (จำเป็นต่อการทำงาน)
+5. [ต่ำ]  exe ยังไม่เซ็นดิจิทัล SmartScreen/แอนตี้ไวรัสอาจเตือน (false positive พบบ่อยกับ PyInstaller)
+           libcrypto-3-x64.dll / libssl-3-x64.dll ในตัว exe ไม่มีลายเซ็น (ปกติของ Qt/PySide6)
+
+คำแนะนำ
+ - ถ้าเครื่องเคยติดไวรัสจริง ให้สแกนเครื่องด้วย Windows Security (Full/Offline scan) และ Malwarebytes
+ - เอา SHA256 ข้างบนไปเช็กบน virustotal.com ได้
+ - ข้อจำกัด: นี่คือการตรวจแบบ static ไม่ได้รันโปรแกรม จึงรับรอง 100% ไม่ได้
